@@ -1,6 +1,6 @@
 var VaderSprite;
-var topSaberSprite;
-var bottomSaberSprite;
+var topCoralSprite;
+var bottomCoralSprite;
 var backgroundSprite;
 
 function Sprite(img, x, y, width, height) {
@@ -26,8 +26,10 @@ function initSprites(img) {
 
 
     
-    topSaberSprite = new Sprite(img, 682, 22, 27, 268);
-    bottomSaberSprite = new Sprite(img, 179, 23, 20, 267);
+    topCoralSprite = new Sprite(img, 289, 0, 22, 32);
+    //topCoralSprite = new Sprite(img, 540, 493, 20, 269);
+    //bottomCoralSprite = new Sprite(img, 540, 350, 20, 269);
+    bottomCoralSprite = new Sprite(img, 289, 0, 22, 32);
 
 
 
