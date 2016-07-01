@@ -2,7 +2,10 @@ var xWings;
 var corals;
 var currentState;
 var renderingContext;
+var myScore = 0;
+var foregroundPosition = 0;
 var frames = 0;
+var okButton;
 
 var width;
 var height;
@@ -25,52 +28,42 @@ function main() {
 
 
 
-
-
 function CoralCollection() {
     this._corals = [];
 
-    /**
-     * Empty corals array
-     */
+
     this.reset = function () {
         this._corals = [];
     };
 
-    /**
-     * Creates and adds a new Coral to the game.
-     */
+
     this.add = function () {
-        this._corals.push(new Coral()); // Create and push coral to array
+        this._corals.push(new Coral());
     };
 
-    /**
-     * Update the position of existing corals and add new corals when necessary.
-     */
+
     this.update = function () {
-        if (frames % 100 === 0) { // Add a new coral to the game every 100 frames.
+        if (frames % 100 === 0) {
             this.add();
         }
 
-        for (var i = 0, len = this._corals.length; i < len; i++) { // Iterate through the array of corals and update each.
-            var coral = this._corals[i]; // The current coral.
+        for (var i = 0, len = this._corals.length; i < len; i++) {
+            var coral = this._corals[i];
 
-            if (i === 0) { // If this is the leftmost coral, it is the only coral that the fish can collide with . . .
-                coral.detectCollision(); // . . . so, determine if the fish has collided with this leftmost coral.
+            if (i === 0) {
+                coral.detectCollision();
+                coral.score();
             }
 
-            coral.x -= 2; // Each frame, move each coral two pixels to the left. Higher/lower values change the movement speed.
-            if (coral.x < -coral.width) { // If the coral has moved off screen . . .
-                this._corals.splice(i, 1); // . . . remove it.
+            coral.x -= 2;
+            if (coral.x < -coral.width) {
+                this._corals.splice(i, 1);
                 i--;
                 len--;
             }
         }
     };
 
-    /**
-     * Draw all corals to canvas context.
-     */
     this.draw = function () {
         for (var i = 0, len = this._corals.length; i < len; i++) {
             var coral = this._corals[i];
@@ -79,35 +72,32 @@ function CoralCollection() {
     };
 }
 
-/**
- * The Coral class. Creates instances of Coral.
- */
 function Coral() {
     this.x = 500;
     this.y = height - (bottomCoralSprite.height  + 120 + 200 * Math.random());
     this.width = bottomCoralSprite.width;
     this.height = bottomCoralSprite.height;
+    this.scored = false;
 
-    /**
-     * Determines if the fish has collided with the Coral.
-     * Calculates x/y difference and use normal vector length calculation to determine
-     */
     this.detectCollision = function () {
-        // intersection
         var cx = Math.min(Math.max(xWings.x, this.x), this.x + this.width);
         var cy1 = Math.min(Math.max(xWings.y, this.y), this.y + this.height);
         var cy2 = Math.min(Math.max(xWings.y, this.y + this.height + 110), this.y + 2 * this.height + 80);
-        // Closest difference
         var dx = xWings.x - cx;
         var dy1 = xWings.y - cy1;
         var dy2 = xWings.y - cy2;
-        // Vector length
         var d1 = dx * dx + dy1 * dy1;
         var d2 = dx * dx + dy2 * dy2;
         var r = xWings.radius * xWings.radius;
-        // Determine intersection
         if (r > d1 || r > d2) {
             currentState = states.Score;
+        }
+    };
+
+    this.score = function () {
+        if(this.x + this.width < xWings.x && !this.scored){
+            updatescore();
+            this.scored = true;
         }
     };
 
@@ -116,32 +106,6 @@ function Coral() {
         topCoralSprite.draw(renderingContext, this.x, this.y + 110 + this.height);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function XWings() {
     this.x = 140;
@@ -156,10 +120,14 @@ function XWings() {
 
     this.gravity = 0.25;
     this._jump = 4.6;
+    this.scored = false;
 
-    this.jump = function () {
-        this.animation = [0, 1, 2, 1];
-    };
+
+
+        this.jump = function () {
+            this.velocity = -this._jump;
+        };
+
 
     this.update = function () {
         var n = currentState === states.Splash ? 10 : 5;
@@ -169,8 +137,8 @@ function XWings() {
 
         if (currentState === states.Splash) {
              this.updateIdleFish();
-        } else { // Game state
-          //  this.updatePlayingFish();
+        } else {
+            this.updatePlayingFish();
         }
     };
 
@@ -178,6 +146,34 @@ function XWings() {
         this.y = height - 280 + 5 * Math.cos(frames / 10);
         this.rotation = 0;
     };
+
+    this.updatePlayingFish = function () {
+        this.velocity += this.gravity;
+        this.y += this.velocity;
+
+        if (this.y >= height - foregroundSprite.height - 10) {
+            this.y = height - foregroundSprite.height - 10;
+
+            if (currentState === states.Game) {
+                currentState = states.Score;
+            }
+
+            this.velocity = this._jump;
+        }
+
+        if (this.y <= 2) {
+            currentState = states.Score;
+        }
+
+        if (this.velocity >= this._jump) {
+            this.frame = 1;
+            this.rotation = Math.min(Math.PI / 2, this.rotation + 0.3);
+        } else {
+            this.rotation = -0.3;
+        }
+    };
+
+
 
     this.draw = function (renderingContext) {
         renderingContext.save();
@@ -205,12 +201,12 @@ function loadGraphics() {
         //backgroundSprite.draw(renderingContext, backgroundSprite.width, height - backgroundSprite.height);
         //fishSprite[0].draw(renderingContext, 5, 5, 142, 50);
 
-    /*okButton = {
+    okButton = {
         x: (width - okButtonSprite.width) / 2,
         y: height - 200,
         width: okButtonSprite.width,
         height: okButtonSprite.height
-    };*/
+    };
 
         gameLoop();
     };
@@ -226,6 +222,7 @@ function windowSetUp() {
         inputEvent = "mousedown";
     }
     document.addEventListener(inputEvent, onpress);
+
 }
 
 
@@ -247,13 +244,13 @@ function gameLoop(){
 function update() {
     frames++;
 
-    /*if (currentState !== states.Score){
-        foregroundPosition = (foregroundPosition - 2) % 14;
+    if (currentState !== states.Score){
+        foregroundPosition = (foregroundPosition - 2) % 425;
     }
 
     if (currentState === states.Game){
         corals.update();
-    }*/
+    }
 
     xWings.update();
 }
@@ -264,32 +261,26 @@ function render() {
 
     corals.draw(renderingContext);
     backgroundSprite.draw(renderingContext, 0, 0);
+    foregroundSprite.draw(renderingContext, 250, 250);
 
    xWings.draw(renderingContext);
 }
 
-//find onpress. Copy that over and modify it.
-
-/**
- * Called on mouse or touch press. Update and change state depending on current game state.
- * @param  {MouseEvent/TouchEvent} evt - the onpress event
- */
-/*function onpress(evt) {
+function onpress(evt) {
 
     switch (currentState) {
 
-        case states.Splash: // Start the game and update the fish velocity.
+        case states.Splash:
             currentState = states.Game;
-            fish.jump();
+            xWings.jump();
 
             break;
 
-        case states.Game: // The game is in progress. Update fish velocity.
-            fish.jump();
+        case states.Game:
+            xWings.jump();
             break;
 
-        case states.Score: // Change from score to splash state if event within okButton bounding box
-            // Get event position
+        case states.Score:
             var mouseX = evt.offsetX, mouseY = evt.offsetY;
 
             if (mouseX == null || mouseY == null) {
@@ -304,55 +295,40 @@ function render() {
                 //console.log('click');
                 corals.reset();
                 currentState = states.Splash;
-                score = 0;
+                if(localStorage.highscore === null || myScore > localStorage.highscore){
+                    localStorage.setItem("highscore", myScore);
+                }
+                myScore = 0;
+                document.getElementById("thehighscore").innerHTML = localStorage.highscore;
+                document.getElementById("displayScore").innerHTML = myScore;
             }
-            break;
             
     }
-}*/
-
-var inputEvent = "touchstart";
-if (width >= 700) {
-    width = 500;
-    height = 640;
-    inputEvent = "mousedown";
 }
 
-// Background Graphics
-var img = new Image();
-img.src
+function render() {
+    // Draw background color
+    renderingContext.fillRect(0, 0, width, height);
 
-function onpress(evt) {
-    switch (currentState) {
+    // Draw background sprites
+    backgroundSprite.draw(renderingContext, 0, height - backgroundSprite.height);
+    backgroundSprite.draw(renderingContext, backgroundSprite.width, height - backgroundSprite.height);
 
-        case states.Splash: // Start the game and update the fish velocity.
-            currentState = states.Game;
-            xWings.jump();
-            break;
+    corals.draw(renderingContext);
+    xWings.draw(renderingContext);
 
-        case states.Game: // The game is in progress. Update fish velocity.
-            xWings.jump();
-            break;
-
-        case states.Score: // Change from score to splash state if event within okButton bounding box
-            // Get event position
-            var mouseX = evt.offsetX, mouseY = evt.offsetY;
-
-            if (mouseX == null || mouseY == null) {
-                mouseX = evt.touches[0].clientX;
-                mouseY = evt.touches[0].clientY;
-            }
-
-            // Check if within the okButton
-            if (okButton.x < mouseX && mouseX < okButton.x + okButton.width &&
-                okButton.y < mouseY && mouseY < okButton.y + okButton.height
-            ) {
-                //console.log('click');
-                corals.reset();
-                currentState = states.Splash;
-                score = 0;
-            }
-            break;
+    if (currentState === states.Score || currentState === states.Splash) {
+        okButtonSprite.draw(renderingContext, okButton.x, okButton.y);
     }
+
+
+    // Draw foreground sprites
+    foregroundSprite.draw(renderingContext, foregroundPosition, height - foregroundSprite.height);
+    foregroundSprite.draw(renderingContext, foregroundPosition + foregroundSprite.width, height - foregroundSprite.height);
 }
 
+function updatescore(){
+    myScore++;
+    document.getElementById("displayScore").innerHTML = myScore;
+    return;
+}

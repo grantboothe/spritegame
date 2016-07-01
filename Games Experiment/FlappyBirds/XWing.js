@@ -1,7 +1,11 @@
 var VaderSprite;
 var topCoralSprite;
-var bottomCoralSprite;
 var backgroundSprite;
+var foregroundPosition;
+var foregroundSprite;
+var bottomCoralSprite;
+var okButtonSprite;
+
 
 function Sprite(img, x, y, width, height) {
     this.img = img;
@@ -24,16 +28,9 @@ function initSprites(img) {
         new Sprite(img, 349, 0, 22, 32),
     ];
 
-
-    
-    topCoralSprite = new Sprite(img, 289, 0, 22, 32);
-    //topCoralSprite = new Sprite(img, 540, 493, 20, 269);
-    //bottomCoralSprite = new Sprite(img, 540, 350, 20, 269);
-    bottomCoralSprite = new Sprite(img, 289, 0, 22, 32);
-
-
-
+    topCoralSprite = new Sprite(img, 534, 377, 8, 130);
+    bottomCoralSprite = new Sprite(img, 534, 520, 8, 134);
     backgroundSprite = new Sprite(img, 530, 0, 500, 300);
+    foregroundSprite = new Sprite(img, 536, 316, 464, 39);
+    okButtonSprite = new Sprite(img, 0, 53, 156, 131);
 }
-
-
